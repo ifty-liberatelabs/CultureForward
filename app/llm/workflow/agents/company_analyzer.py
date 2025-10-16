@@ -6,7 +6,7 @@ import yaml
 
 from app.core.config import settings
 from app.core.logging import logger
-from app.llm.workflow.state import SurveyGenerationState
+from app.llm.workflow.state import SurveyThemeState
 from app.utils.files import get_project_root
 
 
@@ -26,7 +26,7 @@ class CompanyAnalyzerAgent:
             prompts = yaml.safe_load(f)
         return prompts[name]["prompt"]
 
-    def _extract_state_variables(self, state: SurveyGenerationState):
+    def _extract_state_variables(self, state: SurveyThemeState):
         """Extract required variables from state."""
         return {
             "company_url": state.get("company_url", ""),
@@ -65,16 +65,8 @@ class CompanyAnalyzerAgent:
             })
 
     @traceable(run_type="llm", name="Company Analyzer Node")
-    async def company_analyzer_node(self, state: SurveyGenerationState):
-        """
-        Main node function that analyzes company information.
-        
-        This node:
-        1. Extracts company URL from state
-        2. Uses Gemini with Google Search to research the company
-        3. Generates comprehensive one-page company analysis
-        4. Returns analysis to state
-        """
+    async def company_analyzer_node(self, state: SurveyThemeState):
+        """Analyze company using Gemini with Google Search."""
         logger.info(
             "Starting company analysis",
             company_url=state.get("company_url")

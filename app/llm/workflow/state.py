@@ -1,13 +1,14 @@
-from typing import TypedDict, List, Dict
+from typing import TypedDict, List, Dict, Optional
 
 
-class SurveyGenerationState(TypedDict):
-    """
-    SurveyGenerationState contains the state for survey theme generation workflow.
-    """
-    context: str  # User-provided context about survey needs
-    company_url: str  # Company website URL
-    company_analysis: str  # Generated company analysis from CompanyAnalyzerNode
-    themes: List[Dict]  # Generated survey themes from ThemeGeneratorNode
-    node_status: str  # Current node status
-
+class SurveyThemeState(TypedDict):
+    title: str
+    goal: str
+    company_url: str
+    current_themes: Optional[List[Dict]]
+    user_feedback: Optional[str]
+    company_analysis: str
+    themes: List[Dict]
+    explanation: Optional[str]
+    chat_history: Optional[List[Dict]]
+    node_status: str

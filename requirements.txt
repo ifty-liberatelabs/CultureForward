@@ -1,27 +1,31 @@
+# Web framework
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
-pydantic==2.10.4
-pydantic-settings==2.7.1
 python-dotenv==1.0.1
-
-# LangChain
-langchain==0.3.13
-langchain-core==0.3.28
-langchain-openai==0.2.14
-langchain-google-genai==2.1.12
-langchain-google-community
-langgraph==0.2.64
-langsmith==0.2.11
-
-# OpenAI
-openai==1.58.1
-
-# Google AI
-google-generativeai==0.8.3
-
-# Logging
 structlog==24.4.0
+PyYAML==6.0.2
+psycopg
 
-# YAML
-pyyaml==6.0.2
+# Pydantic configuration
+pydantic==2.10.4
+pydantic-core==2.27.2
+pydantic-settings==2.7.1
+
+# LangChain ecosystem
+langchain==0.3.26
+langchain-core==0.3.79
+langchain-community==0.3.26
+langsmith==0.4.37
+langgraph==0.2.64
+langchain-openai==0.2.14
+langchain-google-community==2.0.10
+langchain-google-genai==2.1.12
+
+# AI clients
+openai==1.58.1
+google-ai-generativelanguage==0.7.0
+# Database
+SQLAlchemy==2.0.36
+psycopg2-binary==2.9.10
+psycopg-pool==3.2.4
 

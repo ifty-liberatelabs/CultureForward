@@ -23,6 +23,13 @@ class Settings(BaseSettings):
     LANGCHAIN_API_KEY: str
     LANGCHAIN_PROJECT: str
 
+    # Database Configuration - ADD THESE LINES
+    DATABASE_URL: str
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_DB: str
+    DB_SAVE: bool = False
+
     # LLM MODEL
     OPENAI_MODEL: str
     GEMINI_MODEL: str
