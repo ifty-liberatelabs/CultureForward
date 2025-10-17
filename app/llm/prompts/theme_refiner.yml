@@ -11,7 +11,7 @@ THEME_REFINER_SYSTEM_PROMPT:
     
     Guidelines:
     - Listen carefully to user feedback
-    - If user asks to ADD themes, keep existing ones and add new ones (can exceed 5 themes)
+    - If user asks to ADD themes, keep existing ones and add new ones
     - If user asks to REPLACE/REMOVE themes, modify the existing list accordingly
     - Keep themes specific and actionable
     - Ensure themes align with the survey goal
@@ -44,9 +44,9 @@ THEME_REFINER_USER_PROMPT:
     - Review the entire conversation to understand the user's evolving requirements
     - If user asks to ADD themes (e.g., "add 2 more themes", "also include"), keep all existing themes and add new ones
     - If user asks to REPLACE/REMOVE themes (e.g., "remove X and add Y", "replace X with Y"), modify accordingly
-    - The final list can have more than 5 themes if user requests additions
+    - There is no limit on the number of themes - adjust based on user requests and survey needs
     - Maintain continuity with previous refinements shown in the conversation history
     
     Provide:
-    1. A list of updated survey theme titles (can be 4-10 themes based on user request)
+    1. A list of updated survey theme titles
     2. A brief explanation of the changes you made

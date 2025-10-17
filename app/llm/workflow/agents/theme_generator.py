@@ -2,6 +2,8 @@ from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.output_parsers import PydanticOutputParser
+from langchain.output_parsers import OutputFixingParser
+from langchain_core.prompts.prompt import PromptTemplate
 from langsmith import traceable
 import yaml
 
@@ -10,6 +12,7 @@ from app.core.logging import logger
 from app.llm.workflow.state import SurveyThemeState
 from app.llm.schemas import SurveyThemeAgentResponse
 from app.utils.files import get_project_root
+from app.utils.errors import ThemeGenerationError
 
 
 class ThemeGeneratorAgent:
@@ -25,29 +28,50 @@ class ThemeGeneratorAgent:
             max_retries=2
         )
         self.openai_with_fallback_model = self.model.with_fallbacks([self.gemini_model])
-        self.output_parser = PydanticOutputParser(
-            pydantic_object=SurveyThemeAgentResponse
+        
+        # Output parser with fixing capability
+        self.output_parser_fixer_llm = ChatOpenAI(
+            model="gpt-4.1",
+            temperature=0
         )
+        self.output_fixing_parser_prompt = PromptTemplate.from_template(
+            self._get_output_fixing_prompt()
+        )
+        self.parser = PydanticOutputParser(pydantic_object=SurveyThemeAgentResponse)
+        self.fix_parser = OutputFixingParser.from_llm(
+            parser=self.parser,
+            llm=self.output_parser_fixer_llm,
+            prompt=self.output_fixing_parser_prompt,
+            max_retries=3
+        )
+        self.chain = self.openai_with_fallback_model | self.fix_parser
 
     def get_prompt(self, name: str) -> str:
         prompt_path = get_project_root() / "app" / "llm" / "prompts" / "theme_generator.yml"
         with open(prompt_path, 'r') as f:
             prompts = yaml.safe_load(f)
         return prompts[name]["prompt"]
+    
+    def _get_output_fixing_prompt(self) -> str:
+        """Load output fixing parser prompt"""
+        prompt_path = get_project_root() / "app" / "llm" / "prompts" / "output_fixing_parser.yml"
+        with open(prompt_path, 'r') as f:
+            config = yaml.safe_load(f)
+        return config["prompt"]
 
     def _extract_state_variables(self, state: SurveyThemeState):
         return {
-            "context": state.get("goal", ""),
+            "goal": state.get("goal", ""),
             "company_analysis": state.get("company_analysis", ""),
         }
 
     def _prepare_messages(self, state_vars):
         system_prompt = self.get_prompt("THEME_GENERATOR_SYSTEM_PROMPT")
         user_prompt = self.get_prompt("THEME_GENERATOR_USER_PROMPT")
-        format_instructions = self.output_parser.get_format_instructions()
+        format_instructions = self.parser.get_format_instructions()
 
         user_message = user_prompt.format(
-            context=state_vars["context"],
+            context=state_vars["goal"],
             company_analysis=state_vars["company_analysis"]
         )
         user_message += f"\n\nFormat your response as valid JSON matching this schema:\n{format_instructions}"
@@ -58,32 +82,32 @@ class ThemeGeneratorAgent:
         ]
 
     async def _generate_themes(self, messages):
-        """Call OpenAI with fallback to generate themes with structured output."""
+        """Call OpenAI with fallback to generate themes with OutputFixingParser."""
         try:
-            response = await self.openai_with_fallback_model.ainvoke(messages)
-            
-            # Parse structured output
-            parsed_response = self.output_parser.parse(response.content)
+            # Use chain with OutputFixingParser for automatic error correction
+            parsed_response = await self.chain.ainvoke(messages)
             
             # Convert string themes to dict format for API
             themes = [{"theme": theme} for theme in parsed_response.themes]
+            
+            logger.info(
+                "Themes generated and validated",
+                theme_count=len(themes),
+                parser_used="OutputFixingParser"
+            )
             
             return themes
 
         except Exception as e:
             logger.error(f"Error generating themes: {e}")
-            raise Exception({
-                "status": "Theme Generation Error",
-                "code": "theme_generation_error",
-                "message": "Agent unavailable. Please try again shortly."
-            })
+            raise ThemeGenerationError()
 
     @traceable(run_type="llm", name="Theme Generator Node")
     async def theme_generator_node(self, state: SurveyThemeState):
         """Generate survey themes using OpenAI with Gemini fallback."""
         logger.info(
             "Starting theme generation",
-            context=state.get("context")
+            goal=state.get("goal")
         )
 
         try:

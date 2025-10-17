@@ -22,6 +22,6 @@ class ChatInput(BaseModel):
 
 class ChatResponse(BaseModel):
     survey_id: UUID = Field(..., description="Survey session identifier")
-    themes: List[dict] = Field(..., min_length=1, max_length=10, description="Generated or refined survey themes")
+    themes: List[dict] = Field(..., description="Generated or refined survey themes")
     message: str = Field(..., description="AI response explaining the themes or changes")
     created_at: datetime = Field(..., description="Timestamp when response was created")

@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     LANGCHAIN_API_KEY: str
     LANGCHAIN_PROJECT: str
 
-    # Database Configuration - ADD THESE LINES
+    # Database Configuration
     DATABASE_URL: str
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str

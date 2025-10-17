@@ -8,6 +8,7 @@ from app.core.config import settings
 from app.core.logging import logger
 from app.llm.workflow.state import SurveyThemeState
 from app.utils.files import get_project_root
+from app.utils.errors import GeminiError
 
 
 class CompanyAnalyzerAgent:
@@ -58,11 +59,7 @@ class CompanyAnalyzerAgent:
             return response.content
         except Exception as e:
             logger.error(f"Error calling Gemini API: {e}")
-            raise Exception({
-                "status": "Gemini Error",
-                "code": "gemini_error",
-                "message": str(e)
-            })
+            raise GeminiError(str(e))
 
     @traceable(run_type="llm", name="Company Analyzer Node")
     async def company_analyzer_node(self, state: SurveyThemeState):
