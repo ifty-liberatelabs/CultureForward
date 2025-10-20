@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.core.logging import logger
-from app.api.v1.endpoints import chat
+from app.api.v1.endpoints import chat, survey
 from app.db.init_db import check_and_create_db, init_db
 from app.db.db_manager import DatabaseManager
 
@@ -33,6 +33,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 app.include_router(chat.router, prefix=settings.API_V1_STR, tags=["Survey Theme"])
+app.include_router(survey.router, prefix=f"{settings.API_V1_STR}/survey", tags=["Conversational Survey"])
 
 
 @app.get("/")

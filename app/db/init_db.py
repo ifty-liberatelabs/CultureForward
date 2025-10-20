@@ -73,7 +73,7 @@ def init_db():
             )
         """)
         
-        # Create messages table
+        # Create messages table for theme generation chat
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS messages (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -86,12 +86,44 @@ def init_db():
             )
         """)
         
+        # Create threads table for conversational surveys
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS threads (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                survey_id UUID NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                FOREIGN KEY (survey_id) REFERENCES survey(id) ON DELETE CASCADE
+            )
+        """)
+        
+        # Create survey_messages table for conversational survey responses
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS survey_messages (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                role VARCHAR NOT NULL,
+                content TEXT NOT NULL,
+                thread_id UUID NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                FOREIGN KEY (thread_id) REFERENCES threads(id) ON DELETE CASCADE
+            )
+        """)
+        
         # Create indexes
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_messages_survey_id_created_at ON messages(survey_id, created_at)
         """)
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_survey_created_at ON survey(created_at)
+        """)
+        # Index for threads
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_threads_survey_id_created_at ON threads(survey_id, created_at)
+        """)
+        # Index for survey_messages
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_survey_messages_thread_id_created_at ON survey_messages(thread_id, created_at)
         """)
         
         # Create trigger function for updated_at
@@ -122,6 +154,26 @@ def init_db():
         cursor.execute("""
             CREATE TRIGGER update_messages_updated_at
                 BEFORE UPDATE ON messages
+                FOR EACH ROW
+                EXECUTE FUNCTION update_updated_at_column()
+        """)
+        
+        cursor.execute("""
+            DROP TRIGGER IF EXISTS update_threads_updated_at ON threads
+        """)
+        cursor.execute("""
+            CREATE TRIGGER update_threads_updated_at
+                BEFORE UPDATE ON threads
+                FOR EACH ROW
+                EXECUTE FUNCTION update_updated_at_column()
+        """)
+        
+        cursor.execute("""
+            DROP TRIGGER IF EXISTS update_survey_messages_updated_at ON survey_messages
+        """)
+        cursor.execute("""
+            CREATE TRIGGER update_survey_messages_updated_at
+                BEFORE UPDATE ON survey_messages
                 FOR EACH ROW
                 EXECUTE FUNCTION update_updated_at_column()
         """)

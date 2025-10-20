@@ -135,3 +135,124 @@ class AsyncMessageCRUD:
                 })
             return messages
 
+
+class AsyncThreadCRUD:
+    """Async CRUD operations for Thread table"""
+    
+    def __init__(self, db_manager: DatabaseManager):
+        self.db_manager = db_manager
+    
+    async def create(self, survey_id: str) -> Optional[Dict]:
+        """Create a new thread for a survey"""
+        async with self.db_manager.get_connection() as conn:
+            query = """
+                INSERT INTO threads (id, survey_id, created_at, updated_at)
+                VALUES (gen_random_uuid(), %s, NOW(), NOW())
+                RETURNING id, survey_id, created_at, updated_at
+            """
+            result = await conn.execute(query, (survey_id,))
+            row = await result.fetchone()
+            
+            if row:
+                return {
+                    "id": str(row[0]),
+                    "survey_id": str(row[1]),
+                    "created_at": row[2].isoformat(),
+                    "updated_at": row[3].isoformat()
+                }
+            return None
+    
+    async def get_by_id(self, thread_id: str) -> Optional[Dict]:
+        """Get thread by ID"""
+        async with self.db_manager.get_connection() as conn:
+            query = """
+                SELECT id, survey_id, created_at, updated_at
+                FROM threads WHERE id = %s
+            """
+            result = await conn.execute(query, (thread_id,))
+            row = await result.fetchone()
+            
+            if row:
+                return {
+                    "id": str(row[0]),
+                    "survey_id": str(row[1]),
+                    "created_at": row[2].isoformat(),
+                    "updated_at": row[3].isoformat()
+                }
+            return None
+    
+    async def get_by_survey_id(self, survey_id: str) -> List[Dict]:
+        """Get all threads for a survey"""
+        async with self.db_manager.get_connection() as conn:
+            query = """
+                SELECT id, survey_id, created_at, updated_at
+                FROM threads
+                WHERE survey_id = %s
+                ORDER BY created_at ASC
+            """
+            result = await conn.execute(query, (survey_id,))
+            rows = await result.fetchall()
+            
+            threads = []
+            for row in rows:
+                threads.append({
+                    "id": str(row[0]),
+                    "survey_id": str(row[1]),
+                    "created_at": row[2].isoformat(),
+                    "updated_at": row[3].isoformat()
+                })
+            return threads
+
+
+class AsyncSurveyMessageCRUD:
+    """Async CRUD operations for SurveyMessage table"""
+    
+    def __init__(self, db_manager: DatabaseManager):
+        self.db_manager = db_manager
+    
+    async def create(self, role: str, content: str, thread_id: str) -> Dict:
+        """Create a new survey message"""
+        async with self.db_manager.get_connection() as conn:
+            query = """
+                INSERT INTO survey_messages (id, role, content, thread_id, created_at, updated_at)
+                VALUES (gen_random_uuid(), %s, %s, %s, NOW(), NOW())
+                RETURNING id, role, content, thread_id, created_at, updated_at
+            """
+            result = await conn.execute(query, (role, content, thread_id))
+            row = await result.fetchone()
+            
+            if row:
+                return {
+                    "id": str(row[0]),
+                    "role": row[1],
+                    "content": row[2],
+                    "thread_id": str(row[3]),
+                    "created_at": row[4].isoformat(),
+                    "updated_at": row[5].isoformat()
+                }
+            return None
+    
+    async def get_by_thread_id(self, thread_id: str) -> List[Dict]:
+        """Get all messages for a thread"""
+        async with self.db_manager.get_connection() as conn:
+            query = """
+                SELECT id, role, content, thread_id, created_at, updated_at
+                FROM survey_messages
+                WHERE thread_id = %s
+                ORDER BY created_at ASC
+            """
+            result = await conn.execute(query, (thread_id,))
+            rows = await result.fetchall()
+            
+            messages = []
+            for row in rows:
+                messages.append({
+                    "id": str(row[0]),
+                    "role": row[1],
+                    "content": row[2],
+                    "thread_id": str(row[3]),
+                    "created_at": row[4].isoformat(),
+                    "updated_at": row[5].isoformat()
+                })
+            return messages
+
